@@ -1,5 +1,6 @@
 package dev.thestaticvoid.stcm.item;
 
+import dev.thestaticvoid.stcm.STCMComponents;
 import dev.thestaticvoid.stcm.STCMConfig;
 import dev.thestaticvoid.stcm.client.compat.journeymap.STCMJMPlugin;
 import dev.thestaticvoid.stcm.data.MaterialLoader;
@@ -13,7 +14,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -54,7 +57,27 @@ public class ProspectorPick extends Item {
                     STCMConfig.CONFIG.prospectorVerticalRange.get()));
         }
     }
-
+    private void setDistanceMode(ItemStack pick, Player player, ProspectorDistanceMode mode){
+        pick.set(STCMComponents.PROSPECTOR_DISTANCE_MODE, mode);
+        player.displayClientMessage(
+                Component.translatable("chat.stcm.prospector_mode_switch").append(
+                        Component.literal(mode.getSerializedName().toUpperCase())
+                                .withStyle(ChatFormatting.AQUA)), true);
+    }
+    @Override
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand){
+        var heldStack = player.getItemInHand(hand);
+        if(!player.isCrouching() || level.isClientSide){
+            return InteractionResultHolder.pass(heldStack);
+        }
+        switch (heldStack.get(STCMComponents.PROSPECTOR_DISTANCE_MODE)){
+            case ProspectorDistanceMode.XYZ -> setDistanceMode(heldStack, player, ProspectorDistanceMode.XZ);
+            case ProspectorDistanceMode.XZ -> setDistanceMode(heldStack, player, ProspectorDistanceMode.XYZ);
+            // Unsure of exactly how this would ever happen, but might as well handle the case anyway.
+            case null -> setDistanceMode(heldStack, player, ProspectorDistanceMode.XYZ);
+        }
+        return InteractionResultHolder.consume(heldStack);
+    }
     @Override
     public InteractionResult useOn(UseOnContext context) {
         level = context.getLevel();
@@ -159,17 +182,21 @@ public class ProspectorPick extends Item {
                 oreNameMap.put(capitalizeFirstLetter((oreName.substring(0, oreName.indexOf("_ore"))).replace("_", " ")), pos);
             });
 
+            var stack = player.getMainHandItem();
+            var modeComponent = STCMComponents.PROSPECTOR_DISTANCE_MODE;
+            final ProspectorDistanceMode distanceMode = stack.has(modeComponent) ? stack.get(modeComponent) : ProspectorDistanceMode.XYZ;
             Map<Integer, String> depositsByDistance = new HashMap<>();
+
             oreNameMap.keySet().forEach(name -> {
-                int distance = switch (STCMConfig.CONFIG.prospectorDistanceMode.get()) {
+                int distance = switch (distanceMode) {
                     case ProspectorDistanceMode.XYZ -> (int) Math.sqrt(oreNameMap.get(name).distSqr(blockPos));
                     case ProspectorDistanceMode.XZ -> (int) distXZ(oreNameMap.get(name), blockPos);
                 };
                 depositsByDistance.put(distance, name);
             });
+
             int longestDepositNameLength = oreNameMap.keySet().stream().map(String::length).max(Comparator.comparingInt(a -> a)).orElse(0);
             depositsByDistance.entrySet().stream().sorted(Comparator.comparingInt(Map.Entry::getKey)).forEachOrdered(entry -> {
-                System.out.println(entry.getValue());
                 String depositDisplay = String.format("%1$-" + longestDepositNameLength + "s ", entry.getValue());
                 // relies on the mono7 resource pack being loaded to display properly.
                 ResourceLocation monoFont = ResourceLocation.fromNamespaceAndPath("minecraft", "mono");
