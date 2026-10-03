@@ -26,5 +26,6 @@ replay_pid*
 # Other stuff
 .gradle/
 .idea/
+.vscode/
 build/
 run/
