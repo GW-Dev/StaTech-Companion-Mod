@@ -18,8 +18,6 @@ public class WatutParticleEngineMixin {
     )
     private void onRenderParticles(LightTexture lightTexture, Camera camera, float partialTick, CallbackInfo ci) {
     // Inject to fix the WATUT #73 issue per https://github.com/Corosauce/WATUT/issues/73#issuecomment-4079913003
-        RenderSystem.depthMask(true);
-        RenderSystem.disableBlend();
-        lightTexture.turnOffLightLayer();
+        RenderSystem.enableCull();
     }
 }
