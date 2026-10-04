@@ -8,9 +8,7 @@
     "LootedStatTriggerMixin",
     "ManualPluginEmiMixin"
   ],
-  "client": [
-    "WATUTRenderFixClientMixin"
-  ],
+  "client": [],
   "injectors": {
     "defaultRequire": 1
   },
