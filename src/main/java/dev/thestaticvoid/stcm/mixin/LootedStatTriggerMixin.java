@@ -13,9 +13,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(LootedStatTrigger.class)
 public class LootedStatTriggerMixin {
-  @Inject(method = "trigger", at = @At(value = "HEAD"))
+  @Inject(method = "trigger", at = @At(value = "HEAD"), remap = false)
   private static void grantExperience(ServerPlayer player, CallbackInfo ci) {
-    final RandomSource random = RandomSource.createThreadSafe();
+    final RandomSource random = RandomSource.createNewThreadLocalInstance();
     Integer min = STCMConfig.CONFIG.lootrMinXp.get();
     Integer max = STCMConfig.CONFIG.lootrMaxXp.get();
     player.giveExperiencePoints(random.nextInt(min, max));
