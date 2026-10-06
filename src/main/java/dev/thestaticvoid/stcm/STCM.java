@@ -30,6 +30,7 @@ public class STCM {
 
         STCMBlock.init(modEventBus);
         STCMBlockEntity.init(modEventBus);
+        STCMComponents.init(modEventBus);
         STCMItem.init(modEventBus);
         STCMCreativeModeTabs.init(modEventBus);
 

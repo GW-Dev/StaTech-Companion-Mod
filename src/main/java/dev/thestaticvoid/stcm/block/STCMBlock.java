@@ -25,7 +25,8 @@ public class STCMBlock {
                     .sound(SoundType.ANVIL)
                     .requiresCorrectToolForDrops()
                     .dynamicShape()
-                    .noOcclusion()));
+                    .noOcclusion()
+                    .forceSolidOn()));
 
     private static <T extends Block> DeferredBlock<T> registerBlock(String name, Supplier<T> block) {
         DeferredBlock<T> toReturn = BLOCKS.register(name, block);

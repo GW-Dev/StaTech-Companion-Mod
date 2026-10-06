@@ -81,6 +81,24 @@ repositories {
             includeGroup "com.klikli_dev"
         }
     }
+
+    // For create
+    maven {
+        url "https://maven.createmod.net/"
+        content {
+            includeGroup "com.simibubi.create"
+            includeGroup "net.createmod.ponder"
+            includeGroup "dev.engine-room.flywheel"
+            includeGroup "dev.engine-room.vanillin"
+        }
+    }
+    // For Create
+    maven {
+        url "https://maven.ithundxr.dev/snapshots"
+        content {
+            includeGroup "com.tterrag.registrate"
+        }
+    }
 }
 
 base {
@@ -172,7 +190,10 @@ configurations {
 }
 
 dependencies {
-    implementation "aztech:Modern-Industrialization:${modern_industrialization_version}"
+    implementation ("aztech:Modern-Industrialization:${modern_industrialization_version}") {
+        // TODO remove this when MI updates to 2.5.10
+		exclude group: "com.simibubi.create"
+    }
     implementation "dev.technici4n:GrandPower:${grandpower_version}"
     implementation "net.swedz:tesseract-api-neoforge:${tesseract_version}"
     implementation "org.appliedenergistics:guideme:${guideme_version}"
@@ -190,6 +211,15 @@ dependencies {
     runtimeOnly "top.theillusivec4.curios:curios-neoforge:${curios_version}+${minecraft_version}"
     compileOnly "curse.maven:what-are-they-up-to-${watut_version}"
     localRuntimeOnly "curse.maven:what-are-they-up-to-${watut_version}"
+    localRuntimeOnly ("com.simibubi.create:create-1.21.1:${project.create_version}") {
+        exclude group: "cc.tweaked"
+        exclude group: "top.theillusivec4.curios"
+        exclude group: "info.journeymap"
+        exclude group: "maven.modrinth", module: "journeymap"
+        exclude group: "maven.modrinth", module: "farmers-delight"
+        exclude group: "dev.architectury"
+		exclude group: "dev.ftb.mods"
+    }
     // localRuntimeOnly "curse.maven:journeymap-32274:8658239"
     // implementation "curse.maven:inventory-essentials-368825:8697019"
     // implementation "curse.maven:balm-531761:8645517"
