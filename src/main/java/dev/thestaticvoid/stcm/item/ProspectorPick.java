@@ -1,5 +1,6 @@
 package dev.thestaticvoid.stcm.item;
 
+import dev.thestaticvoid.stcm.STCMComponents;
 import dev.thestaticvoid.stcm.STCMConfig;
 import dev.thestaticvoid.stcm.client.compat.journeymap.STCMJMPlugin;
 import dev.thestaticvoid.stcm.data.MaterialLoader;
@@ -13,7 +14,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -27,14 +30,18 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.neoforged.neoforge.common.Tags;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class ProspectorPick extends Item {
     private static final Map<String, Integer> MaterialMap = new HashMap<>();
-    private final int PICK_COOLDOWN = 100; // 5 seconds
-    private long lastPickUseTime = 0;
-    private Level level;
     private final Map<BlockState, BlockPos> depositsFound = new HashMap<>();
+    private Level level;
 
     public ProspectorPick(Properties properties) {
         super(properties);
@@ -50,7 +57,27 @@ public class ProspectorPick extends Item {
                     STCMConfig.CONFIG.prospectorVerticalRange.get()));
         }
     }
-
+    private void setDistanceMode(ItemStack pick, Player player, ProspectorDistanceMode mode){
+        pick.set(STCMComponents.PROSPECTOR_DISTANCE_MODE, mode);
+        player.displayClientMessage(
+                Component.translatable("chat.stcm.prospector_mode_switch").append(
+                        Component.literal(mode.getSerializedName().toUpperCase())
+                                .withStyle(ChatFormatting.AQUA)), true);
+    }
+    @Override
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand){
+        var heldStack = player.getItemInHand(hand);
+        if(!player.isCrouching() || level.isClientSide){
+            return InteractionResultHolder.pass(heldStack);
+        }
+        switch (heldStack.get(STCMComponents.PROSPECTOR_DISTANCE_MODE)){
+            case ProspectorDistanceMode.XYZ -> setDistanceMode(heldStack, player, ProspectorDistanceMode.XZ);
+            case ProspectorDistanceMode.XZ -> setDistanceMode(heldStack, player, ProspectorDistanceMode.XYZ);
+            // Unsure of exactly how this would ever happen, but might as well handle the case anyway.
+            case null -> setDistanceMode(heldStack, player, ProspectorDistanceMode.XYZ);
+        }
+        return InteractionResultHolder.consume(heldStack);
+    }
     @Override
     public InteractionResult useOn(UseOnContext context) {
         level = context.getLevel();
@@ -74,6 +101,7 @@ public class ProspectorPick extends Item {
         return super.useOn(context);
     }
 
+
     private InteractionResult doSampleInteraction(Level level, Player player, BlockPos blockPos, BlockState state, ResourceLocation id) {
         boolean isPlayerPlaced = false;
         for (Property p : state.getProperties()) {
@@ -83,7 +111,7 @@ public class ProspectorPick extends Item {
         }
 
         if (isPlayerPlaced) {
-            player.displayClientMessage(Component.translatable("chat.stcm.waypoint_failed_player_placed"), true );
+            player.displayClientMessage(Component.translatable("chat.stcm.waypoint_failed_player_placed"), true);
             return InteractionResult.FAIL;
         }
 
@@ -132,39 +160,58 @@ public class ProspectorPick extends Item {
         }
     }
 
+    // distinct from BlockPos::distSqr because this ignores Y coordinates.
+    private float distXZ(BlockPos origin, BlockPos other) {
+        final float distX = Math.abs(other.getX() - origin.getX());
+        final float distZ = Math.abs(other.getZ() - origin.getZ());
+        return (float) Math.sqrt(distX * distX + distZ * distZ);
+    }
+
     private InteractionResult doDepositScan(Level level, Player player, UseOnContext context, BlockPos blockPos) {
-        if (level.getGameTime() > lastPickUseTime + PICK_COOLDOWN) {
-            lastPickUseTime = level.getGameTime();
-            checkBlocksInArea(blockPos, level);
+        player.getCooldowns().addCooldown(this, STCMConfig.CONFIG.prospectorCooldown.get());
+        checkBlocksInArea(blockPos, level);
+        if (!this.depositsFound.isEmpty()) {
+            player.sendSystemMessage(Component.translatable("chat.stcm.prospector_success"));
 
-            if (!this.depositsFound.isEmpty()) {
-                player.sendSystemMessage(Component.translatable("chat.stcm.prospector_success"));
-
-                Map<String, BlockPos> oreNameMap = new HashMap<>();
-                this.depositsFound.forEach((blockState, pos) -> {
-                    String oreName = BuiltInRegistries.BLOCK.getKey(blockState.getBlock()).getPath();
-                    if (oreName.contains("deepslate_")) {
-                        oreName = oreName.substring("deepslate_".length());
-                    }
-                    oreNameMap.put(capitalizeFirstLetter((oreName.substring(0, oreName.indexOf("_ore"))).replace("_", " ")), pos);
-                });
-
-                SortedSet<String> sortedKeys = new TreeSet<>(oreNameMap.keySet());
-                for (String key : sortedKeys) {
-                    int distance = (int) Math.sqrt(oreNameMap.get(key).distSqr(blockPos));
-                    player.sendSystemMessage(Component.translatable("chat.stcm.prospector_deposit_info", key, distance));
+            Map<String, BlockPos> oreNameMap = new HashMap<>();
+            this.depositsFound.forEach((blockState, pos) -> {
+                String oreName = BuiltInRegistries.BLOCK.getKey(blockState.getBlock()).getPath();
+                if (oreName.contains("deepslate_")) {
+                    oreName = oreName.substring("deepslate_".length());
                 }
-            } else {
-                player.sendSystemMessage(Component.translatable("chat.stcm.prospector_no_deposits"));
-            }
+                oreNameMap.put(capitalizeFirstLetter((oreName.substring(0, oreName.indexOf("_ore"))).replace("_", " ")), pos);
+            });
 
-            level.playSound(null, blockPos, SoundEvents.SHOVEL_FLATTEN, SoundSource.BLOCKS, 1.0F, 1.0F);
-            context.getItemInHand().hurtAndBreak(1, player, LivingEntity.getSlotForHand(context.getHand()));
-            return InteractionResult.SUCCESS;
+            var stack = player.getMainHandItem();
+            var modeComponent = STCMComponents.PROSPECTOR_DISTANCE_MODE;
+            final ProspectorDistanceMode distanceMode = stack.has(modeComponent) ? stack.get(modeComponent) : ProspectorDistanceMode.XYZ;
+            Map<Integer, String> depositsByDistance = new HashMap<>();
+
+            oreNameMap.keySet().forEach(name -> {
+                int distance = switch (distanceMode) {
+                    case ProspectorDistanceMode.XYZ -> (int) Math.sqrt(oreNameMap.get(name).distSqr(blockPos));
+                    case ProspectorDistanceMode.XZ -> (int) distXZ(oreNameMap.get(name), blockPos);
+                };
+                depositsByDistance.put(distance, name);
+            });
+
+            int longestDepositNameLength = oreNameMap.keySet().stream().map(String::length).max(Comparator.comparingInt(a -> a)).orElse(0);
+            depositsByDistance.entrySet().stream().sorted(Comparator.comparingInt(Map.Entry::getKey)).forEachOrdered(entry -> {
+                String depositDisplay = String.format("%1$-" + longestDepositNameLength + "s ", entry.getValue());
+                // relies on the mono7 resource pack being loaded to display properly.
+                ResourceLocation monoFont = ResourceLocation.fromNamespaceAndPath("minecraft", "mono");
+                player.sendSystemMessage(Component.translatable("chat.stcm.prospector_deposit_info",
+                        Component.literal(depositDisplay).withStyle(style -> style.withColor(ChatFormatting.AQUA).withFont(monoFont)),
+                        Component.literal(entry.getKey().toString()).withStyle(ChatFormatting.YELLOW)));
+            });
         } else {
-            player.displayClientMessage(Component.translatable("chat.stcm.prospector_cooldown", ((lastPickUseTime + PICK_COOLDOWN - level.getGameTime()) / 20.0)), true);
-            return InteractionResult.FAIL;
+            player.sendSystemMessage(Component.translatable("chat.stcm.prospector_no_deposits"));
         }
+
+        level.playSound(null, blockPos, SoundEvents.SHOVEL_FLATTEN, SoundSource.BLOCKS, 1.0F, 1.0F);
+        context.getItemInHand().hurtAndBreak(1, player, LivingEntity.getSlotForHand(context.getHand()));
+        return InteractionResult.SUCCESS;
+
     }
 
     private void checkBlocksInArea(BlockPos startPosition, Level level) {
@@ -236,7 +283,7 @@ public class ProspectorPick extends Item {
         return count;
     }
 
-    private String  capitalizeFirstLetter(String word) {
+    private String capitalizeFirstLetter(String word) {
         String[] separated = word.split(" ");
         StringBuilder formatted = new StringBuilder();
         for (int i = 0; i < separated.length; i++) {
