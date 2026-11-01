@@ -1,6 +1,9 @@
 package dev.thestaticvoid.stcm;
 
+import org.slf4j.Logger;
+
 import com.mojang.logging.LogUtils;
+
 import dev.thestaticvoid.stcm.block.STCMBlock;
 import dev.thestaticvoid.stcm.block.entity.STCMBlockEntity;
 import dev.thestaticvoid.stcm.entity.STCMEntity;
@@ -16,9 +19,6 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import top.theillusivec4.curios.api.*;
-import top.theillusivec4.curios.api.type.capability.*;
-import org.slf4j.Logger;
 
 @Mod(STCM.ID)
 public class STCM {
@@ -41,26 +41,9 @@ public class STCM {
         STCMWorld.init(modEventBus);
 
         modEventBus.addListener(RegisterPayloadHandlersEvent.class, STCMPacket::init);
-        modEventBus.addListener(this::registerCapabilities)
     }
 
     public static ResourceLocation id(String path) {
         return ResourceLocation.fromNamespaceAndPath(ID, path);
     }
-
-    public void registerCapabilities(final RegisterCapabilitiesEvent evt) {
-        evt.registerItem(
-            CuriosCapability.ITEM,
-            (stack, context) -> new ICurio() {
-
-                @Override
-                public ItemStack getStack() {
-                  return stack;
-                }
-
-                @Override
-                public void curioTick(SlotContext slotContext) {
-                  // ticking logic here
-            },
-            STCM.ITEM);
 }
