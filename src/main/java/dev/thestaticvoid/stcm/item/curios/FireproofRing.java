@@ -1,18 +1,16 @@
 package dev.thestaticvoid.stcm.item.curios;
 
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.item.TooltipFlag;
 import top.theillusivec4.curios.api.*;
-import top.theillusivec4.curios.api.type.capability.*;
 import net.minecraft.network.chat.Component;
 
 import java.util.*;
 
-public class FireproofRing extends Item implements ICurioItem {
+public class FireproofRing extends STCMCurioItem {
 
     public static final int FIRE_RESISTANCE_EFFECT_DURATION = 600;
 
