@@ -1,5 +1,7 @@
 {
   "values": [
-    "stcm:neoforge_hammer"
+    "stcm:neoforge_hammer",
+    "stcm:decorative_waxed_copper_block",
+    "stcm:decorative_waxed_oxidized_copper"
   ]
 }

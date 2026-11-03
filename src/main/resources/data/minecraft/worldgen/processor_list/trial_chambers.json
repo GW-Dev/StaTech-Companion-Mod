@@ -1,0 +1,33 @@
+{
+  "processors": [
+    {
+      "processor_type": "minecraft:rule",
+      "rules": [
+        {
+          "location_predicate": {
+            "predicate_type": "minecraft:always_true"
+          },
+          "input_predicate": {
+            "predicate_type": "minecraft:block_match",
+            "block": "minecraft:waxed_copper_block"
+          },
+          "output_state": {
+            "Name": "stcm:decorative_waxed_copper_block"
+          }
+        },
+        {
+          "location_predicate": {
+            "predicate_type": "minecraft:always_true"
+          },
+          "input_predicate": {
+            "predicate_type": "minecraft:block_match",
+            "block": "minecraft:waxed_oxidized_copper"
+          },
+          "output_state": {
+            "Name": "stcm:decorative_waxed_oxidized_copper"
+          }
+        }
+      ]
+    }
+  ]
+}

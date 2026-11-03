@@ -17,16 +17,32 @@ import java.util.function.Supplier;
 public class STCMBlock {
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(STCM.ID);
 
+    public static final DeferredBlock<Block> DECORATIVE_WAXED_COPPER_BLOCK = registerBlock("decorative_waxed_copper_block",
+        () -> new Block(BlockBehaviour.Properties.of()
+            .mapColor(MapColor.METAL)
+            .destroyTime(3.0F)
+            .explosionResistance(6.0F)
+            .sound(SoundType.COPPER)
+            .requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> DECORATIVE_WAXED_OXIDIZED_COPPER = registerBlock("decorative_waxed_oxidized_copper",
+        () -> new Block(BlockBehaviour.Properties.of()
+            .mapColor(MapColor.METAL)
+            .destroyTime(3.0F)
+            .explosionResistance(6.0F)
+            .sound(SoundType.COPPER)
+            .requiresCorrectToolForDrops()));
+
     public static final DeferredBlock<Block> NEOFORGE_HAMMER = registerBlock("neoforge_hammer",
-            () -> new NeoForgeHammerBlock(BlockBehaviour.Properties.of()
-                    .mapColor(MapColor.METAL)
-                    .destroyTime(6.0F)
-                    .explosionResistance(1200)
-                    .sound(SoundType.ANVIL)
-                    .requiresCorrectToolForDrops()
-                    .dynamicShape()
-                    .noOcclusion()
-                    .forceSolidOn()));
+        () -> new NeoForgeHammerBlock(BlockBehaviour.Properties.of()
+            .mapColor(MapColor.METAL)
+            .destroyTime(6.0F)
+            .explosionResistance(1200)
+            .sound(SoundType.ANVIL)
+            .requiresCorrectToolForDrops()
+            .dynamicShape()
+            .noOcclusion()
+            .forceSolidOn()));
 
     private static <T extends Block> DeferredBlock<T> registerBlock(String name, Supplier<T> block) {
         DeferredBlock<T> toReturn = BLOCKS.register(name, block);
