@@ -20,6 +20,8 @@ public class STCMCreativeModeTabs {
                         output.accept(STCMItem.ANGEL_RING);
                         output.accept(STCMItem.FIREPROOF_RING);
                         output.accept(STCMItem.PROSPECTOR_PICK);
+                        output.accept(STCMBlock.DECORATIVE_WAXED_COPPER_BLOCK);
+                        output.accept(STCMBlock.DECORATIVE_WAXED_OXIDIZED_COPPER);
                         output.accept(STCMBlock.NEOFORGE_HAMMER);
                     })).build());
 

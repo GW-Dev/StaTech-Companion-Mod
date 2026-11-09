@@ -1,5 +1,7 @@
 {
   "block.stcm.neoforge_hammer": "NeoForge Hammer",
+  "block.stcm.decorative_waxed_copper_block": "Decorative Waxed Copper Block",
+  "block.stcm.decorative_waxed_oxidized_copper": "Decorative Waxed Oxidized Copper",
   "chat.stcm.prospector_cooldown": "§cPlease wait %1$s §cseconds before prospecting again!",
   "chat.stcm.prospector_deposit_info": "- %1$s: Approx. %2$s blocks away",
   "chat.stcm.prospector_no_deposits": "§cNo deposits found in this area...",
